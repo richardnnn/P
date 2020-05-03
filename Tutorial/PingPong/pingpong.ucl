@@ -1,0 +1,109 @@
+module main {
+    
+    type machine_id = integer;
+    type event_id   = integer;
+    
+    // Events
+    type signal_t = enum { PING, PONG, SUCCESS, ACT };
+    type event_t  = record { 
+        signal: signal_t, 
+        source: machine_id,
+        target: machine_id
+    };
+    
+    // States
+    type state_e = enum { INIT, SENDPING, WAITPONG, WAITPING, SENDPONG};
+    type state_t = record { 
+        name : state_e, 
+        entry: boolean
+    };
+    
+    // Machines
+    type kind_t  = enum { CLIENT, SERVER};
+    type machine_t = record { 
+        alive: boolean, 
+        kind : kind_t, 
+        state: state_t 
+    };
+    
+    // state of the system
+    type system_t = record {  machines: [machine_id]machine_t, 
+        m_count : machine_id, 
+        events  : [event_id]event_t, 
+        e_head  : event_id,  
+        e_tail  : event_id,
+        e_size  : event_id
+    };
+    
+    // define shortcuts: "m_" prefix is for machines "e_" prefix is for events
+    define m_count   () : machine_id  = system.m_count;
+    define e_head    () : event_id    = system.e_head;
+    define e_tail    () : event_id    = system.e_tail;
+    define e_signal (id : event_id)   : signal_t   = system.events[id].signal;
+    define e_target (id : event_id)   : machine_id = system.events[id].target;
+    define e_valid  (id : event_id)   : boolean    = id >= e_head() && id < e_tail();
+    define m_get    (id : machine_id) : machine_t  = system.machines[id];
+    define m_kind   (id : machine_id) : kind_t     = system.machines[id].kind;
+    define m_state  (id : machine_id) : state_e    = system.machines[id].state.name;
+    define m_entry  (id : machine_id) : boolean    = system.machines[id].state.entry;
+    define m_alive  (id : machine_id) : boolean    = id >= 0 && id < system.m_count && system.machines[id].alive;
+    
+    //  procedures for event queues
+    procedure [inline] reset_events() 
+        modifies system;
+    {
+        system.e_head = 0;
+        system.e_tail = 0;
+        system.e_size = 0;
+    }
+    
+    procedure [inline] push_event(e: event_t)
+        modifies system;
+    {
+        system.events = system.events[e_tail() -> e];
+        system.e_tail = e_tail()  + 1;
+        system.e_size = e_count() + 1;
+    }
+    
+    procedure [inline] pop_event() 
+        returns (e: event_t)
+        modifies system;
+    {
+        e = system.events[e_head()];
+        system.e_head = e_head()  + 1;
+        system.e_size = e_count() - 1;
+    }
+    
+    //  procedures for machine management
+    procedure [inline] reset_machines() 
+        modifies system;
+    {
+        system.m_count = 0;
+    }
+    
+    procedure [inline] add_machine(m: machine_t) 
+        modifies system;
+    {
+        system.machines = system.machines[m_count() -> m];
+        system.m_count  = m_count() + 1;
+    }
+    
+    procedure [inline] delete_machine(id: machine_id) 
+        modifies system;
+    {
+        var tmp : machine_t;
+        tmp             = m_get(id);
+        tmp.alive       = false;
+        system.machines = system.machines[id -> tmp];
+    }
+    
+    // Write your invariant here to finish induction...
+    
+    
+    control {
+        induction;
+        check;
+        print_results;
+    }
+    
+}

@@ -100,6 +100,10 @@ namespace Plang.Compiler
                                     outputLanguage = CompilerOutput.Coyote;
                                     break;
 
+                                case "uclid5":
+                                    outputLanguage = CompilerOutput.Uclid5;
+                                    break;
+                                
                                 default:
                                     CommandlineOutput.WriteMessage(
                                         $"Unrecognized generate option '{colonArg}', expecting C or Coyote",
@@ -319,6 +323,9 @@ namespace Plang.Compiler
                         outputLanguage = CompilerOutput.Coyote;
                         break;
 
+                    case "uclid5":
+                        outputLanguage = CompilerOutput.Uclid5;
+                        break;
                     default:
                         outputLanguage = CompilerOutput.C;
                         break;
